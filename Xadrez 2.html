@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Xadrez 2</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+
+            background:
+                radial-gradient(circle at top, #26384f, #0d1117 70%);
+
+            color: white;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 30px;
+        }
+
+        .game {
+            width: min(1200px, 100%);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+
+            font-size: 48px;
+
+            background: linear-gradient(
+                90deg,
+                #ffffff,
+                #9cc7ff
+            );
+
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: #aab4c3;
+            margin-top: 8px;
+        }
+
+        .game-area {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        /* =========================
+           TABULEIRO
+        ========================= */
+
+        .board-container {
+            background: #111820;
+            padding: 15px;
+
+            border-radius: 18px;
+
+            box-shadow:
+                0 20px 60px rgba(0,0,0,.5),
+                inset 0 0 0 1px rgba(255,255,255,.05);
+        }
+
+        #board {
+            width: min(75vw, 680px);
+            height: min(75vw, 680px);
+
+            max-width: 680px;
+            max-height: 680px;
+
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+
+            border-radius: 8px;
+            overflow: hidden;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,.4);
+        }
+
+        .square {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: clamp(35px, 6vw, 65px);
+
+            cursor: pointer;
+
+            user-select: none;
+
+            transition:
+                filter .15s,
+                transform .1s;
+        }
+
+        .square.light {
+            background: #e8edf2;
+        }
+
+        .square.dark {
+            background: #55708a;
+        }
+
+        .square:hover {
+            filter: brightness(1.12);
+        }
+
+        .square.selected {
+            box-shadow:
+                inset 0 0 0 5px #ffd84d;
+        }
+
+        .square.possible::after {
+            content: "";
+
+            position: absolute;
+
+            width: 22%;
+            height: 22%;
+
+            border-radius: 50%;
+
+            background: rgba(40, 180, 99, .8);
+        }
+
+        .square.capture::after {
+            content: "";
+
+            position: absolute;
+
+            width: 75%;
+            height: 75%;
+
+            border-radius: 50%;
+
+            border: 5px solid rgba(220, 50, 50, .7);
+        }
+
+        .piece {
+            position: relative;
+            z-index: 2;
+
+            line-height: 1;
+
+            filter:
+                drop-shadow(0 3px 2px rgba(0,0,0,.45));
+        }
+
+        /* =========================
+           PAINEL
+        ========================= */
+
+        .panel {
+            width: 300px;
+
+            background: rgba(20, 27, 36, .95);
+
+            border-radius: 18px;
+
+            padding: 22px;
+
+            box-shadow:
+                0 20px 50px rgba(0,0,0,.4);
+
+            border: 1px solid rgba(255,255,255,.06);
+        }
+
+        .status {
+            padding: 15px;
+
+            border-radius: 12px;
+
+            background: #18222e;
+
+            margin-bottom: 20px;
+
+            text-align: center;
+        }
+
+        .status strong {
+            display: block;
+
+            font-size: 18px;
+
+            margin-bottom: 5px;
+        }
+
+        .timer-container {
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 10px;
+
+            margin-bottom: 20px;
+        }
+
+        .timer {
+            padding: 15px;
+
+            background: #10161e;
+
+            border-radius: 12px;
+
+            text-align: center;
+        }
+
+        .timer span {
+            display: block;
+
+            font-size: 28px;
+
+            font-weight: bold;
+
+            font-family: monospace;
+        }
+
+        .timer small {
+            color: #9ba8b7;
+        }
+
+        .moves {
+            height: 270px;
+
+            overflow-y: auto;
+
+            background: #10161e;
+
+            border-radius: 12px;
+
+            padding: 12px;
+
+            margin-bottom: 20px;
+        }
+
+        .moves h3 {
+            margin-top: 0;
+        }
+
+        .move {
+            display: grid;
+
+            grid-template-columns: 35px 1fr 1fr;
+
+            padding: 6px 4px;
+
+            border-bottom: 1px solid rgba(255,255,255,.05);
+
+            color: #d5dce5;
+        }
+
+        button {
+            width: 100%;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+            font-size: 15px;
+
+            background: #3478f6;
+
+            color: white;
+
+            transition: .2s;
+        }
+
+        button:hover {
+            background: #2465da;
+
+            transform: translateY(-1px);
+        }
+
+        button.secondary {
+            background: #303b49;
+
+            margin-top: 10px;
+        }
+
+        button.secondary:hover {
+            background: #3d4b5d;
+        }
+
+        /* =========================
+           RESPONSIVO
+        ========================= */
+
+        @media(max-width: 900px) {
+
+            .game-area {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .panel {
+                width: min(680px, 100%);
+            }
+
+            #board {
+                width: 90vw;
+                height: 90vw;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <header>
+        <h1>♛ Xadrez 2</h1>
+        <p>Uma nova experiência para o xadrez clássico</p>
+    </header>
+
+    <div class="game-area">
+
+        <div class="board-container">
+            <div id="board"></div>
+        </div>
+
+        <aside class="panel">
+
+            <div class="status">
+                <strong id="status">Vez das Brancas</strong>
+                <span id="message">Escolha uma peça.</span>
+            </div>
+
+            <div class="timer-container">
+
+                <div class="timer">
+                    <span id="whiteTime">10:00</span>
+                    <small>Brancas</small>
+                </div>
+
+                <div class="timer">
+                    <span id="blackTime">10:00</span>
+                    <small>Pretas</small>
+                </div>
+
+            </div>
+
+            <div class="moves">
+
+                <h3>Movimentos</h3>
+
+                <div id="moveList"></div>
+
+            </div>
+
+            <button onclick="restartGame()">
+                🔄 Nova partida
+            </button>
+
+            <button
+                class="secondary"
+                onclick="undoMove()">
+
+                ↩️ Desfazer movimento
+
+            </button>
+
+        </aside>
+
+    </div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   XADREZ 2
+   SISTEMA PRINCIPAL
+===================================================== */
+
+const boardElement = document.getElementById("board");
+
+const statusElement = document.getElementById("status");
+
+const messageElement = document.getElementById("message");
+
+const moveListElement = document.getElementById("moveList");
+
+const whiteTimeElement = document.getElementById("whiteTime");
+
+const blackTimeElement = document.getElementById("blackTime");
+
+
+/* =====================================================
+   PEÇAS
+===================================================== */
+
+const pieces = {
+
+    white: {
+        king: "♔",
+        queen: "♕",
+        rook: "♖",
+        bishop: "♗",
+        knight: "♘",
+        pawn: "♙"
+    },
+
+    black: {
+        king: "♚",
+        queen: "♛",
+        rook: "♜",
+        bishop: "♝",
+        knight: "♞",
+        pawn: "♟"
+    }
+
+};
+
+
+/* =====================================================
+   TABULEIRO INICIAL
+===================================================== */
+
+const initialBoard = [
+
+    [
+        {type:"rook", color:"black"},
+        {type:"knight", color:"black"},
+        {type:"bishop", color:"black"},
+        {type:"queen", color:"black"},
+        {type:"king", color:"black"},
+        {type:"bishop", color:"black"},
+        {type:"knight", color:"black"},
+        {type:"rook", color:"black"}
+    ],
+
+    [
+        {type:"pawn", color:"black"},
+        {type:"pawn", color:"black"},
+        {type:"pawn", color:"black"},
+        {type:"pawn", color:"black"},
+        {type:"pawn", color:"black"},
+        {type:"pawn", color:"black"},
+        {type:"pawn", color:"black"},
+        {type:"pawn", color:"black"}
+    ],
+
+    [null,null,null,null,null,null,null,null],
+
+    [null,null,null,null,null,null,null,null],
+
+    [null,null,null,null,null,null,null,null],
+
+    [null,null,null,null,null,null,null,null],
+
+    [
+        {type:"pawn", color:"white"},
+        {type:"pawn", color:"white"},
+        {type:"pawn", color:"white"},
+        {type:"pawn", color:"white"},
+        {type:"pawn", color:"white"},
+        {type:"pawn", color:"white"},
+        {type:"pawn", color:"white"},
+        {type:"pawn", color:"white"}
+    ],
+
+    [
+        {type:"rook", color:"white"},
+        {type:"knight", color:"white"},
+        {type:"bishop", color:"white"},
+        {type:"queen", color:"white"},
+        {type:"king", color:"white"},
+        {type:"bishop", color:"white"},
+        {type:"knight", color:"white"},
+        {type:"rook", color:"white"}
+    ]
+
+];
+
+
+/* =====================================================
+   ESTADO DO JOGO
+===================================================== */
+
+let board = [];
+
+let currentPlayer = "white";
+
+let selectedSquare = null;
+
+let possibleMoves = [];
+
+let history = [];
+
+let whiteTime = 600;
+
+let blackTime = 600;
+
+let gameOver = false;
+
+
+/* =====================================================
+   INICIAR JOGO
+===================================================== */
+
+function restartGame() {
+
+    board = JSON.parse(JSON.stringify(initialBoard));
+
+    currentPlayer = "white";
+
+    selectedSquare = null;
+
+    possibleMoves = [];
+
+    history = [];
+
+    whiteTime = 600;
+
+    blackTime = 600;
+
+    gameOver = false;
+
+    moveListElement.innerHTML = "";
+
+    messageElement.textContent = "Escolha uma peça.";
+
+    renderBoard();
+
+}
+
+
+/* =====================================================
+   DESENHAR TABULEIRO
+===================================================== */
+
+function renderBoard() {
+
+    boardElement.innerHTML = "";
+
+    for(let row = 0; row < 8; row++) {
+
+        for(let col = 0; col < 8; col++) {
+
+            const square = document.createElement("div");
+
+            square.classList.add("square");
+
+            if((row + col) % 2 === 0) {
+
+                square.classList.add("light");
+
+            } else {
+
+                square.classList.add("dark");
+
+            }
+
+            if(
+                selectedSquare &&
+                selectedSquare.row === row &&
+                selectedSquare.col === col
+            ) {
+
+                square.classList.add("selected");
+
+            }
+
+            if(
+                possibleMoves.some(
+                    move =>
+                    move.row === row &&
+                    move.col === col
+                )
+            ) {
+
+                if(board[row][col]) {
+
+                    square.classList.add("capture");
+
+                } else {
+
+                    square.classList.add("possible");
+
+                }
+
+            }
+
+            const piece = board[row][col];
+
+            if(piece) {
+
+                const pieceElement = document.createElement("span");
+
+                pieceElement.classList.add("piece");
+
+                pieceElement.textContent =
+                    pieces[piece.color][piece.type];
+
+                square.appendChild(pieceElement);
+
+            }
+
+            square.addEventListener(
+                "click",
+                () => handleSquareClick(row, col)
+            );
+
+            boardElement.appendChild(square);
+
+        }
+
+    }
+
+    updateStatus();
+
+}
+
+
+/* =====================================================
+   CLIQUE NA CASA
+===================================================== */
+
+function handleSquareClick(row, col) {
+
+    if(gameOver) return;
+
+    const piece = board[row][col];
+
+
+    /* Se nenhuma peça foi selecionada */
+
+    if(!selectedSquare) {
+
+        if(!piece) {
+
+            return;
+
+        }
+
+        if(piece.color !== currentPlayer) {
+
+            messageElement.textContent =
+                "Essa peça pertence ao adversário.";
+
+            return;
+
+        }
+
+        selectedSquare = {
+            row,
+            col
+        };
+
+        possibleMoves =
+            getPossibleMoves(row, col);
+
+        messageElement.textContent =
+            "Escolha o destino.";
+
+        renderBoard();
+
+        return;
+    }
+
+
+    /* Clicar novamente na própria peça */
+
+    if(
+        selectedSquare.row === row &&
+        selectedSquare.col === col
+    ) {
+
+        selectedSquare = null;
+
+        possibleMoves = [];
+
+        messageElement.textContent =
+            "Escolha uma peça.";
+
+        renderBoard();
+
+        return;
+    }
+
+
+    /* Tentar realizar movimento */
+
+    const validMove = possibleMoves.some(
+        move =>
+            move.row === row &&
+            move.col === col
+    );
+
+    if(validMove) {
+
+        makeMove(
+            selectedSquare.row,
+            selectedSquare.col,
+            row,
+            col
+        );
+
+    } else {
+
+        messageElement.textContent =
+            "Movimento inválido.";
+
+    }
+
+}
+
+
+/* =====================================================
+   MOVIMENTOS
+===================================================== */
+
+function getPossibleMoves(row, col) {
+
+    const piece = board[row][col];
+
+    if(!piece) return [];
+
+    const moves = [];
+
+    switch(piece.type) {
+
+        case "pawn":
+
+            pawnMoves(row, col, piece, moves);
+
+            break;
+
+        case "rook":
+
+            slidingMoves(
+                row,
+                col,
+                piece,
+                moves,
+                [
+                    [1,0],
+                    [-1,0],
+                    [0,1],
+                    [0,-1]
+                ]
+            );
+
+            break;
+
+        case "bishop":
+
+            slidingMoves(
+                row,
+                col,
+                piece,
+                moves,
+                [
+                    [1,1],
+                    [1,-1],
+                    [-1,1],
+                    [-1,-1]
+                ]
+            );
+
+            break;
+
+        case "queen":
+
+            slidingMoves(
+                row,
+                col,
+                piece,
+                moves,
+                [
+                    [1,0],
+                    [-1,0],
+                    [0,1],
+                    [0,-1],
+                    [1,1],
+                    [1,-1],
+                    [-1,1],
+                    [-1,-1]
+                ]
+            );
+
+            break;
+
+        case "knight":
+
+            knightMoves(
+                row,
+                col,
+                piece,
+                moves
+            );
+
+            break;
+
+        case "king":
+
+            kingMoves(
+                row,
+                col,
+                piece,
+                moves
+            );
+
+            break;
+
+    }
+
+    return moves;
+}
+
+
+/* =====================================================
+   PEÃO
+===================================================== */
+
+function pawnMoves(row, col, piece, moves) {
+
+    const direction =
+        piece.color === "white" ? -1 : 1;
+
+    const startRow =
+        piece.color === "white" ? 6 : 1;
+
+    const nextRow = row + direction;
+
+    if(
+        nextRow >= 0 &&
+        nextRow < 8 &&
+        !board[nextRow][col]
+    ) {
+
+        moves.push({
+            row: nextRow,
+            col
+        });
+
+        const doubleRow =
+            row + direction * 2;
+
+        if(
+            row === startRow &&
+            !board[doubleRow][col]
+        ) {
+
+            moves.push({
+                row: doubleRow,
+                col
+            });
+
+        }
+
+    }
+
+
+    /* Capturas */
+
+    for(const dc of [-1,1]) {
+
+        const captureCol = col + dc;
+
+        if(
+            nextRow >= 0 &&
+            nextRow < 8 &&
+            captureCol >= 0 &&
+            captureCol < 8
+        ) {
+
+            const target =
+                board[nextRow][captureCol];
+
+            if(
+                target &&
+                target.color !== piece.color
+            ) {
+
+                moves.push({
+                    row: nextRow,
+                    col: captureCol
+                });
+
+            }
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   TORRE / BISPO / RAINHA
+===================================================== */
+
+function slidingMoves(
+    row,
+    col,
+    piece,
+    moves,
+    directions
+) {
+
+    for(const [dr, dc] of directions) {
+
+        let r = row + dr;
+        let c = col + dc;
+
+        while(
+            r >= 0 &&
+            r < 8 &&
+            c >= 0 &&
+            c < 8
+        ) {
+
+            const target = board[r][c];
+
+            if(!target) {
+
+                moves.push({
+                    row:r,
+                    col:c
+                });
+
+            } else {
+
+                if(
+                    target.color !== piece.color
+                ) {
+
+                    moves.push({
+                        row:r,
+                        col:c
+                    });
+
+                }
+
+                break;
+
+            }
+
+            r += dr;
+            c += dc;
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   CAVALO
+===================================================== */
+
+function knightMoves(
+    row,
+    col,
+    piece,
+    moves
+) {
+
+    const jumps = [
+
+        [2,1],
+        [2,-1],
+        [-2,1],
+        [-2,-1],
+
+        [1,2],
+        [1,-2],
+        [-1,2],
+        [-1,-2]
+
+    ];
+
+    for(const [dr,dc] of jumps) {
+
+        const r = row + dr;
+
+        const c = col + dc;
+
+        if(
+            r < 0 ||
+            r >= 8 ||
+            c < 0 ||
+            c >= 8
+        ) continue;
+
+        const target = board[r][c];
+
+        if(
+            !target ||
+            target.color !== piece.color
+        ) {
+
+            moves.push({
+                row:r,
+                col:c
+            });
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   REI
+===================================================== */
+
+function kingMoves(
+    row,
+    col,
+    piece,
+    moves
+) {
+
+    for(let dr = -1; dr <= 1; dr++) {
+
+        for(let dc = -1; dc <= 1; dc++) {
+
+            if(dr === 0 && dc === 0)
+                continue;
+
+            const r = row + dr;
+
+            const c = col + dc;
+
+            if(
+                r < 0 ||
+                r >= 8 ||
+                c < 0 ||
+                c >= 8
+            ) continue;
+
+            const target = board[r][c];
+
+            if(
+                !target ||
+                target.color !== piece.color
+            ) {
+
+                moves.push({
+                    row:r,
+                    col:c
+                });
+
+            }
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   FAZER MOVIMENTO
+===================================================== */
+
+function makeMove(
+    fromRow,
+    fromCol,
+    toRow,
+    toCol
+) {
+
+    const movingPiece =
+        board[fromRow][fromCol];
+
+    const capturedPiece =
+        board[toRow][toCol];
+
+
+    /* Salvar estado */
+
+    history.push({
+
+        board: JSON.parse(JSON.stringify(board)),
+
+        player: currentPlayer
+
+    });
+
+
+    /* Movimento */
+
+    board[toRow][toCol] =
+        movingPiece;
+
+    board[fromRow][fromCol] =
+        null;
+
+
+    /* Promoção */
+
+    if(
+        movingPiece.type === "pawn" &&
+        (toRow === 0 || toRow === 7)
+    ) {
+
+        movingPiece.type = "queen";
+
+    }
+
+
+    /* Registrar movimento */
+
+    addMoveToHistory(
+        movingPiece,
+        fromRow,
+        fromCol,
+        toRow,
+        toCol,
+        capturedPiece
+    );
+
+
+    /* Trocar jogador */
+
+    currentPlayer =
+        currentPlayer === "white"
+            ? "black"
+            : "white";
+
+
+    selectedSquare = null;
+
+    possibleMoves = [];
+
+
+    renderBoard();
+
+}
+
+
+/* =====================================================
+   HISTÓRICO
+===================================================== */
+
+function addMoveToHistory(
+    piece,
+    fromRow,
+    fromCol,
+    toRow,
+    toCol,
+    captured
+) {
+
+    const moveNumber =
+        Math.ceil(history.length / 2);
+
+    const notation =
+        pieces[piece.color][piece.type] +
+        " " +
+        squareName(fromRow, fromCol) +
+        " → " +
+        squareName(toRow, toCol) +
+        (captured ? " ×" : "");
+
+
+    let moveElement =
+        document.querySelector(
+            `.move[data-number="${moveNumber}"]`
+        );
+
+
+    if(!moveElement) {
+
+        moveElement =
+            document.createElement("div");
+
+        moveElement.classList.add("move");
+
+        moveElement.dataset.number =
+            moveNumber;
+
+        moveElement.innerHTML = `
+            <span>${moveNumber}.</span>
+            <span></span>
+            <span></span>
+        `;
+
+        moveListElement.appendChild(moveElement);
+
+    }
+
+
+    const spans =
+        moveElement.querySelectorAll("span");
+
+
+    if(piece.color === "white") {
+
+        spans[1].textContent =
+            notation;
+
+    } else {
+
+        spans[2].textContent =
+            notation;
+
+    }
+
+
+    moveListElement.scrollTop =
+        moveListElement.scrollHeight;
+
+}
+
+
+/* =====================================================
+   NOME DA CASA
+===================================================== */
+
+function squareName(row, col) {
+
+    const letters =
+        "abcdefgh";
+
+    return (
+        letters[col] +
+        (8 - row)
+    );
+
+}
+
+
+/* =====================================================
+   DESFAZER
+===================================================== */
+
+function undoMove() {
+
+    if(history.length === 0)
+        return;
+
+    const previous =
+        history.pop();
+
+    board =
+        JSON.parse(
+            JSON.stringify(previous.board)
+        );
+
+    currentPlayer =
+        previous.player;
+
+    selectedSquare = null;
+
+    possibleMoves = [];
+
+
+    const moves =
+        moveListElement.querySelectorAll(".move");
+
+    if(moves.length > 0) {
+
+        const last =
+            moves[moves.length - 1];
+
+        const spans =
+            last.querySelectorAll("span");
+
+        if(spans[2].textContent) {
+
+            spans[2].textContent = "";
+
+        } else {
+
+            last.remove();
+
+        }
+
+    }
+
+    renderBoard();
+
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function updateStatus() {
+
+    if(gameOver)
+        return;
+
+    const name =
+        currentPlayer === "white"
+            ? "Brancas"
+            : "Pretas";
+
+    statusElement.textContent =
+        `Vez das ${name}`;
+
+}
+
+
+/* =====================================================
+   CRONÔMETRO
+===================================================== */
+
+function updateTimers() {
+
+    if(gameOver)
+        return;
+
+    if(currentPlayer === "white") {
+
+        whiteTime--;
+
+    } else {
+
+        blackTime--;
+
+    }
+
+
+    if(whiteTime <= 0) {
+
+        whiteTime = 0;
+
+        gameOver = true;
+
+        statusElement.textContent =
+            "Pretas venceram!";
+
+    }
+
+
+    if(blackTime <= 0) {
+
+        blackTime = 0;
+
+        gameOver = true;
+
+        statusElement.textContent =
+            "Brancas venceram!";
+
+    }
+
+
+    whiteTimeElement.textContent =
+        formatTime(whiteTime);
+
+    blackTimeElement.textContent =
+        formatTime(blackTime);
+
+}
+
+
+function formatTime(seconds) {
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const secs =
+        seconds % 60;
+
+    return (
+        String(minutes).padStart(2,"0") +
+        ":" +
+        String(secs).padStart(2,"0")
+    );
+
+}
+
+
+/* =====================================================
+   INICIALIZAÇÃO
+===================================================== */
+
+restartGame();
+
+setInterval(
+    updateTimers,
+    1000
+);
+
+</script>
+
+</body>
+</html>
