@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xadrez 2</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="game">
+
+  <header>
+    <h1>♛ Xadrez 2</h1>
+    <p>Xadrez clássico com regras completas — roque, en passant e promoção</p>
+  </header>
+
+  <div class="game-area">
+
+    <!-- TABULEIRO -->
+    <div class="board-container">
+      <div id="board" role="grid" aria-label="Tabuleiro de xadrez"></div>
+    </div>
+
+    <!-- PAINEL -->
+    <aside class="panel">
+
+      <div class="status">
+        <strong id="status">Vez das Brancas</strong>
+        <span id="message">Escolha uma peça.</span>
+      </div>
+
+      <div class="setting-row">
+        <label for="timeControl">Tempo por jogador</label>
+        <select id="timeControl">
+          <option value="180">3 minutos</option>
+          <option value="300">5 minutos</option>
+          <option value="600" selected>10 minutos</option>
+          <option value="900">15 minutos</option>
+          <option value="1800">30 minutos</option>
+          <option value="0">Sem cronômetro</option>
+        </select>
+      </div>
+
+      <div class="timer-container">
+        <div class="timer" id="whiteTimerBox">
+          <span id="whiteTime">10:00</span>
+          <small>Brancas</small>
+        </div>
+        <div class="timer" id="blackTimerBox">
+          <span id="blackTime">10:00</span>
+          <small>Pretas</small>
+        </div>
+      </div>
+
+      <div class="captured-container">
+        <div class="captured-row">
+          <span id="capturedByWhite"></span>
+          <span class="material" id="materialWhite"></span>
+        </div>
+        <div class="captured-row">
+          <span id="capturedByBlack"></span>
+          <span class="material" id="materialBlack"></span>
+        </div>
+      </div>
+
+      <div class="moves">
+        <h3>Movimentos</h3>
+        <div id="moveList"></div>
+      </div>
+
+      <button id="restartBtn">🔄 Nova partida</button>
+      <button class="secondary" id="undoBtn">↩️ Desfazer movimento</button>
+
+      <div class="button-row">
+        <button class="danger" id="resignBtn">🏳️ Desistir</button>
+        <button class="secondary" id="drawBtn">🤝 Empate</button>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>
+
+<!-- MODAL DE PROMOÇÃO -->
+<div id="promotionOverlay" class="promotion-overlay hidden">
+  <div class="promotion-box">
+    <p>Escolha a peça de promoção:</p>
+    <div class="promotion-options" id="promotionOptions"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
