@@ -168,22 +168,41 @@ header p {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 0.85em;
-  height: 0.85em;
-  font-size: 0.62em;
+  width: 0.92em;
+  height: 0.92em;
+  font-size: 0.58em;
   border-radius: 50%;
-  filter: none;
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, .5));
   text-shadow: none;
+  position: relative;
+  transition: transform .12s;
 }
 
 .piece.special-piece.white {
-  background: #ffffff;
-  box-shadow: 0 0 0 2px #1e2833, 0 4px 6px rgba(0, 0, 0, .4);
+  background: radial-gradient(circle at 35% 28%, #ffffff, #d7dee6 78%);
 }
 
 .piece.special-piece.black {
-  background: #1a2027;
-  box-shadow: 0 0 0 2px #e6ebef, 0 4px 6px rgba(0, 0, 0, .4);
+  background: radial-gradient(circle at 35% 28%, #3c4652, #10151b 78%);
+}
+
+/* Anel colorido temático — dá identidade visual a cada peça nova,
+   independente da cor do jogador (branco/preto continua no miolo). */
+
+.piece.special-piece.wizard {
+  box-shadow: 0 0 0 3px #a463f7, 0 0 16px 3px rgba(164, 99, 247, .55);
+}
+
+.piece.special-piece.archer {
+  box-shadow: 0 0 0 3px #2ecc71, 0 0 16px 3px rgba(46, 204, 113, .5);
+}
+
+.piece.special-piece.dragon {
+  box-shadow: 0 0 0 3px #ff7043, 0 0 18px 4px rgba(255, 112, 67, .6);
+}
+
+.square:hover .piece.special-piece {
+  transform: scale(1.06);
 }
 
 /* =========================================
@@ -191,7 +210,7 @@ header p {
 ========================================= */
 
 .event-icon {
-  font-size: clamp(20px, 3.5vw, 36px);
+  font-size: clamp(18px, 2.6vw, 32px);
   opacity: .85;
   z-index: 2;
   pointer-events: none;
@@ -510,11 +529,6 @@ button.danger:hover {
 
   .panel {
     width: min(680px, 100%);
-  }
-
-  #board {
-    width: 90vw;
-    height: 90vw;
   }
 }
 

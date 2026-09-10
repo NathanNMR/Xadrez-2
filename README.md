@@ -40,20 +40,29 @@ script.js    → toda a lógica do jogo (regras, IA de validação de lances, es
 
 ## Modo Especial ✨
 
-Além do xadrez clássico, dá para escolher **Modo Especial** no seletor "Modo de jogo". Ele usa o mesmo tabuleiro e as mesmas regras de roque, en passant, xeque e xeque-mate — mas troca os cavalos e bispos por duas peças novas, e adiciona seis casas com efeitos únicos, sempre nas mesmas posições (para manter o jogo justo e simétrico):
+Além do xadrez clássico, dá para escolher **Modo Especial** no seletor "Modo de jogo". Ele usa um tabuleiro **mais largo (14 colunas × 8 fileiras)** em vez de substituir peças clássicas — cavalos, bispos, torres, dama, rei e peões continuam todos lá, e as peças novas entram "por fora" das torres, mantendo o tabuleiro simétrico e o roque funcionando normalmente (a distância entre rei e torres foi preservada de propósito).
+
+**Primeira fileira do Modo Especial** (de cada lado):
+
+```
+Dragão · Mago · Arqueiro · Torre · Cavalo · Bispo · Dama · Rei · Bispo · Cavalo · Torre · Arqueiro · Mago · Dragão
+```
 
 **Peças novas**
 
-- 🧙 **Mago** (substitui os cavalos) — anda como um bispo, em qualquer distância na diagonal, **ou** uma única casa na horizontal/vertical.
-- 🏹 **Arqueiro** (substitui os bispos) — anda uma casa em qualquer direção, mas só para casas vazias (não captura por movimento). Em vez disso, ele **atira a distância**: pode capturar uma peça inimiga exatamente 2 casas em linha reta, sem se mover, desde que a casa do meio esteja livre. Um arqueiro bem posicionado também pode dar xeque a distância.
+- 🧙 **Mago** — anda como um bispo, em qualquer distância na diagonal, **ou** uma única casa na horizontal/vertical.
+- 🏹 **Arqueiro** — anda uma casa em qualquer direção, mas só para casas vazias (não captura por movimento). Em vez disso, ele **atira a distância**: pode capturar uma peça inimiga exatamente 2 casas em linha reta, sem se mover, desde que a casa do meio esteja livre. Um arqueiro bem posicionado também pode dar xeque a distância.
+- 🐉 **Dragão** — combina o salto do Cavalo com o alcance do Bispo (diagonal, qualquer distância). É a peça mais poderosa do Modo Especial depois da Dama.
 
-**Casas de evento** (ficam nas duas fileiras centrais, sempre vazias no início)
+Cada peça nova tem um **anel colorido temático** (roxo para o Mago, verde para o Arqueiro, laranja para o Dragão) para ser identificada rapidamente no tabuleiro, além do círculo branco/preto que indica o dono da peça.
+
+**Casas de evento** (posicionadas proporcionalmente nas duas fileiras centrais, sempre vazias no início — por isso continuam simétricas em qualquer largura de tabuleiro)
 
 - 🌀 **Portal** (duas casas ligadas entre si) — a peça que pousar em um portal é teleportada instantaneamente para o portal-par, se ele estiver livre.
 - 💎 **Poço de Energia** — se um peão pousar aqui, é promovido a Dama na hora, sem precisar chegar até a última fileira. Some do tabuleiro depois de usado uma vez.
 - 🔥 **Armadilha** — qualquer peça (exceto o rei) que pousar aqui é destruída imediatamente. Também some após disparar uma vez, então depois de acionada a casa fica segura.
 
-A notação de lances do Modo Especial usa `M` para Mago e `A` para Arqueiro (ex.: `Mc4`), e o tiro do arqueiro aparece como `Ae4»e6` (a peça atira de e4 e acerta e6, sem se mover).
+A notação de lances do Modo Especial usa `M` para Mago, `D` para Dragão e `A` para Arqueiro (ex.: `Mc4`, `Dg5`), e o tiro do arqueiro aparece como `Ag4»g6` (a peça atira de g4 e acerta g6, sem se mover).
 
 ## Limitações conhecidas / próximos passos possíveis
 - É um jogo local para dois jogadores no mesmo dispositivo — não há oponente automático (IA) nem multiplayer online.

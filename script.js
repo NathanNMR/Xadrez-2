@@ -4,7 +4,7 @@
    CONSTANTES
 ===================================================== */
 
-const FILES = "abcdefgh";
+const FILES = "abcdefghijklmn"; // até 14 colunas, usado no Modo Especial
 
 const SYMBOLS = {
   white: { king: "♔", queen: "♕", rook: "♖", bishop: "♗", knight: "♘", pawn: "♙" },
@@ -12,22 +12,31 @@ const SYMBOLS = {
 };
 
 // Peças do Modo Especial não têm glifo de xadrez tradicional — usamos emoji
-// dentro de um "chip" colorido (ver CSS .special-piece) para indicar a cor.
-const SPECIAL_SYMBOLS = { wizard: "🧙", archer: "🏹" };
+// dentro de um "chip" colorido com anel temático (ver CSS .special-piece).
+const SPECIAL_SYMBOLS = { wizard: "🧙", archer: "🏹", dragon: "🐉" };
 
 const PIECE_LETTERS = {
   king: "K", queen: "Q", rook: "R", bishop: "B", knight: "N", pawn: "",
-  wizard: "M", archer: "A"
+  wizard: "M", archer: "A", dragon: "D"
 };
 const PIECE_NAMES_PT = {
   king: "Rei", queen: "Rainha", rook: "Torre", bishop: "Bispo", knight: "Cavalo", pawn: "Peão",
-  wizard: "Mago", archer: "Arqueiro"
+  wizard: "Mago", archer: "Arqueiro", dragon: "Dragão"
 };
 const PIECE_VALUES = {
   king: 0, queen: 9, rook: 5, bishop: 3, knight: 3, pawn: 1,
-  wizard: 4, archer: 4
+  wizard: 4, archer: 4, dragon: 7
 };
 const PROMOTION_CHOICES = ["queen", "rook", "bishop", "knight"];
+
+// Ordem da primeira fileira no Modo Especial: as peças novas ficam nas
+// bordas, "por fora" das torres — então a distância entre rei e cada
+// torre é idêntica à do xadrez clássico, e o roque funciona sem mudanças.
+const SPECIAL_BACK_RANK = [
+  "dragon", "wizard", "archer", "rook", "knight", "bishop", "queen",
+  "king", "bishop", "knight", "rook", "archer", "wizard", "dragon"
+];
+const CLASSIC_BACK_RANK = ["rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"];
 
 // Eventos de casa do Modo Especial: chave "linha,coluna" -> { type, pairKey? }
 // portal: teleporta a peça que pousar nele até a casa-par (se ela estiver vazia)
@@ -60,6 +69,10 @@ let lastMove = null;          // {from:{row,col}, to:{row,col}} — para destaca
 let pendingPromotion = null;  // guarda o lance aguardando escolha de peça
 
 let specialMode = false;      // true quando o Modo Especial está ativo
+let boardCols = 8;            // 8 no clássico, 14 no Modo Especial (mais peças, mesmo nº de fileiras)
+let kingHomeCol = 4;          // coluna inicial do rei — usada pelo roque
+let rookKingsideCol = 7;      // coluna inicial da torre do lado do rei
+let rookQueensideCol = 0;     // coluna inicial da torre do lado da dama
 let eventSquares = {};        // "linha,coluna" -> { type, pairKey? } — só usado no Modo Especial
 let eventMessage = "";        // texto extra sobre o último evento disparado, mostrado no painel
 
@@ -90,12 +103,10 @@ const materialBlackElement = document.getElementById("materialBlack");
 ===================================================== */
 
 function createInitialBoard(isSpecial) {
-  const backRank = isSpecial
-    ? ["rook", "wizard", "archer", "queen", "king", "archer", "wizard", "rook"]
-    : ["rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"];
-  const newBoard = Array.from({ length: 8 }, () => Array(8).fill(null));
+  const backRank = isSpecial ? SPECIAL_BACK_RANK : CLASSIC_BACK_RANK;
+  const newBoard = Array.from({ length: 8 }, () => Array(boardCols).fill(null));
 
-  for (let col = 0; col < 8; col++) {
+  for (let col = 0; col < boardCols; col++) {
     newBoard[0][col] = { type: backRank[col], color: "black", hasMoved: false };
     newBoard[1][col] = { type: "pawn", color: "black", hasMoved: false };
     newBoard[6][col] = { type: "pawn", color: "white", hasMoved: false };
@@ -107,14 +118,17 @@ function createInitialBoard(isSpecial) {
 
 function createEventSquares() {
   // As casas ficam nas duas fileiras centrais (sempre vazias no início da
-  // partida) e são simétricas, para não favorecer nenhum dos lados.
+  // partida). As colunas são calculadas como frações da largura do
+  // tabuleiro, então a disposição continua simétrica em qualquer tamanho.
+  const c = n => Math.round(boardCols * n);
+
   return {
-    "3,1": { type: "portal", pairKey: "4,6" },
-    "4,6": { type: "portal", pairKey: "3,1" },
-    "3,6": { type: "trap" },
-    "4,1": { type: "trap" },
-    "3,3": { type: "well" },
-    "4,4": { type: "well" }
+    [`3,${c(0.15)}`]: { type: "portal", pairKey: `4,${c(0.85)}` },
+    [`4,${c(0.85)}`]: { type: "portal", pairKey: `3,${c(0.15)}` },
+    [`3,${c(0.85)}`]: { type: "trap" },
+    [`4,${c(0.15)}`]: { type: "trap" },
+    [`3,${c(0.5)}`]: { type: "well" },
+    [`4,${c(0.5)}`]: { type: "well" }
   };
 }
 
@@ -124,6 +138,18 @@ function createEventSquares() {
 
 function restartGame() {
   specialMode = gameModeSelect.value === "special";
+  boardCols = specialMode ? 14 : 8;
+
+  if (specialMode) {
+    kingHomeCol = SPECIAL_BACK_RANK.indexOf("king");
+    rookKingsideCol = SPECIAL_BACK_RANK.lastIndexOf("rook");
+    rookQueensideCol = SPECIAL_BACK_RANK.indexOf("rook");
+  } else {
+    kingHomeCol = CLASSIC_BACK_RANK.indexOf("king");
+    rookKingsideCol = CLASSIC_BACK_RANK.lastIndexOf("rook");
+    rookQueensideCol = CLASSIC_BACK_RANK.indexOf("rook");
+  }
+
   board = createInitialBoard(specialMode);
   eventSquares = specialMode ? createEventSquares() : {};
   eventMessage = "";
@@ -143,6 +169,7 @@ function restartGame() {
   pendingPromotion = null;
 
   specialLegendElement.classList.toggle("hidden", !specialMode);
+  applyBoardDimensions();
 
   timeControlSeconds = timeControlSelect.value === "0" ? null : Number(timeControlSelect.value);
   whiteTime = timeControlSeconds;
@@ -162,13 +189,20 @@ function restartGame() {
    DESENHAR TABULEIRO
 ===================================================== */
 
+function applyBoardDimensions() {
+  boardElement.style.gridTemplateColumns = `repeat(${boardCols}, 1fr)`;
+  boardElement.style.aspectRatio = `${boardCols} / 8`;
+  boardElement.style.width = specialMode ? "min(92vw, 1120px)" : "min(75vw, 680px)";
+  boardElement.style.height = "auto";
+}
+
 function renderBoard() {
   boardElement.innerHTML = "";
 
   const checkedKing = isKingInCheck(board, currentPlayer);
 
   for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
+    for (let col = 0; col < boardCols; col++) {
       const square = document.createElement("div");
       square.classList.add("square", (row + col) % 2 === 0 ? "light" : "dark");
       square.setAttribute("role", "button");
@@ -203,10 +237,10 @@ function renderBoard() {
 
       if (piece) {
         const pieceElement = document.createElement("span");
-        const isSpecialPiece = piece.type === "wizard" || piece.type === "archer";
+        const isSpecialPiece = piece.type === "wizard" || piece.type === "archer" || piece.type === "dragon";
 
         if (isSpecialPiece) {
-          pieceElement.classList.add("piece", "special-piece", piece.color);
+          pieceElement.classList.add("piece", "special-piece", piece.type, piece.color);
           pieceElement.textContent = SPECIAL_SYMBOLS[piece.type];
         } else {
           pieceElement.classList.add("piece", piece.color);
@@ -362,6 +396,9 @@ function getPseudoMoves(positionBoard, row, col) {
     case "archer":
       addArcherMoves(positionBoard, row, col, piece, moves);
       break;
+    case "dragon":
+      addDragonMoves(positionBoard, row, col, piece, moves);
+      break;
   }
 
   return moves;
@@ -467,34 +504,39 @@ function addCastlingMoves(positionBoard, row, col, piece, moves) {
   const enemy = opponent(piece.color);
   if (isSquareAttackedBy(positionBoard, row, col, enemy)) return;
 
-  const kingsideRook = positionBoard[row][7];
+  const kingsideRook = positionBoard[row][rookKingsideCol];
   if (
     kingsideRook &&
     kingsideRook.type === "rook" &&
     kingsideRook.color === piece.color &&
     !kingsideRook.hasMoved &&
-    !positionBoard[row][5] &&
-    !positionBoard[row][6] &&
-    !isSquareAttackedBy(positionBoard, row, 5, enemy) &&
-    !isSquareAttackedBy(positionBoard, row, 6, enemy)
+    isRangeEmpty(positionBoard, row, col + 1, rookKingsideCol - 1) &&
+    !isSquareAttackedBy(positionBoard, row, col + 1, enemy) &&
+    !isSquareAttackedBy(positionBoard, row, col + 2, enemy)
   ) {
     moves.push({ row, col: col + 2, flag: "castleK" });
   }
 
-  const queensideRook = positionBoard[row][0];
+  const queensideRook = positionBoard[row][rookQueensideCol];
   if (
     queensideRook &&
     queensideRook.type === "rook" &&
     queensideRook.color === piece.color &&
     !queensideRook.hasMoved &&
-    !positionBoard[row][1] &&
-    !positionBoard[row][2] &&
-    !positionBoard[row][3] &&
-    !isSquareAttackedBy(positionBoard, row, 2, enemy) &&
-    !isSquareAttackedBy(positionBoard, row, 3, enemy)
+    isRangeEmpty(positionBoard, row, rookQueensideCol + 1, col - 1) &&
+    !isSquareAttackedBy(positionBoard, row, col - 1, enemy) &&
+    !isSquareAttackedBy(positionBoard, row, col - 2, enemy)
   ) {
     moves.push({ row, col: col - 2, flag: "castleQ" });
   }
+}
+
+// Verifica se todas as casas entre `fromCol` e `toCol` (inclusive) estão vazias.
+function isRangeEmpty(positionBoard, row, fromCol, toCol) {
+  for (let c = fromCol; c <= toCol; c++) {
+    if (positionBoard[row][c]) return false;
+  }
+  return true;
 }
 
 /* =====================================================
@@ -567,6 +609,14 @@ function getArcherRangedSquares(positionBoard, row, col) {
   return squares;
 }
 
+// Dragão: combina o salto do cavalo com o alcance do bispo (qualquer
+// distância na diagonal) — voa por cima de outras peças ao saltar, e
+// "sobrevoa" longas diagonais como se cuspisse fogo em linha reta.
+function addDragonMoves(positionBoard, row, col, piece, moves) {
+  addKnightMoves(positionBoard, row, col, piece, moves);
+  addSlidingMoves(positionBoard, row, col, piece, moves, BISHOP_DIRECTIONS);
+}
+
 /* =====================================================
    ATAQUES / XEQUE
 ===================================================== */
@@ -617,6 +667,9 @@ function getAttackMoves(positionBoard, row, col) {
       // então não conta como ataque (igual ao avanço reto do peão).
       moves.push(...getArcherRangedSquares(positionBoard, row, col));
       break;
+    case "dragon":
+      addDragonMoves(positionBoard, row, col, piece, moves);
+      break;
   }
 
   return moves;
@@ -624,7 +677,7 @@ function getAttackMoves(positionBoard, row, col) {
 
 function isSquareAttackedBy(positionBoard, row, col, attackerColor) {
   for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
+    for (let c = 0; c < boardCols; c++) {
       const piece = positionBoard[r][c];
       if (!piece || piece.color !== attackerColor) continue;
 
@@ -639,7 +692,7 @@ function isSquareAttackedBy(positionBoard, row, col, attackerColor) {
 
 function findKing(positionBoard, color) {
   for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
+    for (let col = 0; col < boardCols; col++) {
       const piece = positionBoard[row][col];
       if (piece && piece.type === "king" && piece.color === color) {
         return { row, col };
@@ -659,7 +712,7 @@ function isKingInCheck(positionBoard, color) {
 
 function hasLegalMoves(color) {
   for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
+    for (let col = 0; col < boardCols; col++) {
       const piece = board[row][col];
       if (piece && piece.color === color) {
         if (getLegalMoves(board, row, col).length > 0) return true;
@@ -715,14 +768,14 @@ function commitMove(fromRow, fromCol, toRow, toCol, flag, promotionType) {
     movingPiece.hasMoved = true;
 
     if (flag === "castleK") {
-      const rook = board[fromRow][7];
-      board[fromRow][5] = rook;
-      board[fromRow][7] = null;
+      const rook = board[fromRow][rookKingsideCol];
+      board[fromRow][toCol - 1] = rook;
+      board[fromRow][rookKingsideCol] = null;
       rook.hasMoved = true;
     } else if (flag === "castleQ") {
-      const rook = board[fromRow][0];
-      board[fromRow][3] = rook;
-      board[fromRow][0] = null;
+      const rook = board[fromRow][rookQueensideCol];
+      board[fromRow][toCol + 1] = rook;
+      board[fromRow][rookQueensideCol] = null;
       rook.hasMoved = true;
     }
 
@@ -850,7 +903,7 @@ function computeSAN(fromRow, fromCol, toRow, toCol, flag, promotionType) {
   const alliesReachingTarget = [];
 
   for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
+    for (let c = 0; c < boardCols; c++) {
       if (r === fromRow && c === fromCol) continue;
       const candidate = board[r][c];
 
@@ -950,7 +1003,7 @@ function isInsufficientMaterial() {
   if (pieces.length === 2 && pieces.every(p => p.type === "bishop") && pieces[0].color !== pieces[1].color) {
     const squareShades = [];
     for (let r = 0; r < 8; r++) {
-      for (let c = 0; c < 8; c++) {
+      for (let c = 0; c < boardCols; c++) {
         if (board[r][c] && board[r][c].type === "bishop") squareShades.push((r + c) % 2);
       }
     }
@@ -1096,7 +1149,7 @@ function boardToFen() {
     let empty = 0;
     let rowText = "";
 
-    for (let c = 0; c < 8; c++) {
+    for (let c = 0; c < boardCols; c++) {
       const piece = board[r][c];
 
       if (!piece) {
@@ -1111,7 +1164,7 @@ function boardToFen() {
 
       const letter = {
         pawn: "p", knight: "n", bishop: "b", rook: "r", queen: "q", king: "k",
-        wizard: "w", archer: "a"
+        wizard: "w", archer: "a", dragon: "d"
       }[piece.type];
       rowText += piece.color === "white" ? letter.toUpperCase() : letter;
     }
@@ -1126,17 +1179,17 @@ function boardToFen() {
 
 function castlingRightsString() {
   let rights = "";
-  const whiteKing = findPieceAt(7, 4, "king", "white");
-  const blackKing = findPieceAt(0, 4, "king", "black");
+  const whiteKing = findPieceAt(7, kingHomeCol, "king", "white");
+  const blackKing = findPieceAt(0, kingHomeCol, "king", "black");
 
   if (whiteKing && !whiteKing.hasMoved) {
-    if (isUnmovedRook(7, 7, "white")) rights += "K";
-    if (isUnmovedRook(7, 0, "white")) rights += "Q";
+    if (isUnmovedRook(7, rookKingsideCol, "white")) rights += "K";
+    if (isUnmovedRook(7, rookQueensideCol, "white")) rights += "Q";
   }
 
   if (blackKing && !blackKing.hasMoved) {
-    if (isUnmovedRook(0, 7, "black")) rights += "k";
-    if (isUnmovedRook(0, 0, "black")) rights += "q";
+    if (isUnmovedRook(0, rookKingsideCol, "black")) rights += "k";
+    if (isUnmovedRook(0, rookQueensideCol, "black")) rights += "q";
   }
 
   return rights || "-";
@@ -1200,7 +1253,7 @@ function formatTime(seconds) {
 ===================================================== */
 
 function inside(row, col) {
-  return row >= 0 && row < 8 && col >= 0 && col < 8;
+  return row >= 0 && row < 8 && col >= 0 && col < boardCols;
 }
 
 function cloneBoard(source) {
