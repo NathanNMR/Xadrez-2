@@ -31,6 +31,14 @@
       </div>
 
       <div class="setting-row">
+        <label for="gameMode">Modo de jogo</label>
+        <select id="gameMode">
+          <option value="classic" selected>Clássico</option>
+          <option value="special">Especial ✨</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
         <label for="timeControl">Tempo por jogador</label>
         <select id="timeControl">
           <option value="180">3 minutos</option>
@@ -40,6 +48,13 @@
           <option value="1800">30 minutos</option>
           <option value="0">Sem cronômetro</option>
         </select>
+      </div>
+
+      <div class="legend hidden" id="specialLegend">
+        <strong>Modo Especial:</strong>
+        <p>🧙 <b>Mago</b> — anda na diagonal (qualquer distância) ou 1 casa na ortogonal.</p>
+        <p>🏹 <b>Arqueiro</b> — anda 1 casa (sem capturar) e atira até 2 casas em linha reta.</p>
+        <p>🌀 Portal teleporta · 💎 Poço promove um peão · 🔥 Armadilha destrói quem pisar.</p>
       </div>
 
       <div class="timer-container">

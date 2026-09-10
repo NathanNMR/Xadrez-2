@@ -1,3 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xadrez 2</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  background: radial-gradient(circle at top, #26384f, #0b1016 75%);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 25px;
+}
+
+.game {
+  width: min(1200px, 100%);
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(35px, 5vw, 52px);
+  background: linear-gradient(90deg, #ffffff, #9ec9ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+header p {
+  color: #aeb9c7;
+  margin: 8px 0 0;
+}
+
+/* =========================================
+   ÁREA DO JOGO
+========================================= */
+
+.game-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 25px;
+}
+
+/* =========================================
+   TABULEIRO
+========================================= */
+
+.board-container {
+  padding: 14px;
+  background: #111820;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+#board {
+  width: min(75vw, 680px);
+  height: min(75vw, 680px);
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+/* =========================================
+   CASAS
+========================================= */
+
+.square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: filter .12s, box-shadow .12s;
+}
+
+.square.light {
+  background: #e6ebef;
+}
+
+.square.dark {
+  background: #55718a;
+}
+
+.square:hover {
+  filter: brightness(1.08);
+}
+
+.square:focus-visible {
+  outline: 3px solid #ffd447;
+  outline-offset: -3px;
+  z-index: 4;
+}
+
+/* Casa selecionada */
+
+.square.selected {
+  box-shadow: inset 0 0 0 5px #ffd447;
+}
+
+/* Último movimento */
+
+.square.last-move {
+  box-shadow: inset 0 0 0 999px rgba(255, 212, 71, .22);
+}
+
+/* Movimento possível */
+
+.square.possible::after {
+  content: "";
+  position: absolute;
+  width: 20%;
+  height: 20%;
+  border-radius: 50%;
+  background: rgba(36, 180, 99, .85);
+  z-index: 1;
+}
+
+/* Captura */
+
+.square.capture::after {
+  content: "";
+  position: absolute;
+  width: 76%;
+  height: 76%;
+  border-radius: 50%;
+  border: 5px solid rgba(220, 50, 50, .8);
+  z-index: 1;
+}
+
+/* =========================================
+   PEÇAS
+========================================= */
+
+.piece {
+  position: relative;
+  z-index: 3;
+  font-family: "DejaVu Sans", "Arial Unicode MS", sans-serif;
+  font-size: clamp(35px, 6vw, 68px);
+  line-height: 1;
+  transition: transform .12s;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, .45));
+}
+
+.piece.white {
+  color: #ffffff;
+  text-shadow: -1px -1px 0 #222, 1px -1px 0 #222, -1px 1px 0 #222, 1px 1px 0 #222;
+}
+
+.piece.black {
+  color: #171b20;
+  text-shadow: 0 2px 2px rgba(255, 255, 255, .25);
+}
+
+/* =========================================
+   PEÇAS DO MODO ESPECIAL
+========================================= */
+
+.piece.special-piece {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.85em;
+  height: 0.85em;
+  font-size: 0.62em;
+  border-radius: 50%;
+  filter: none;
+  text-shadow: none;
+}
+
+.piece.special-piece.white {
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #1e2833, 0 4px 6px rgba(0, 0, 0, .4);
+}
+
+.piece.special-piece.black {
+  background: #1a2027;
+  box-shadow: 0 0 0 2px #e6ebef, 0 4px 6px rgba(0, 0, 0, .4);
+}
+
+/* =========================================
+   CASAS DE EVENTO
+========================================= */
+
+.event-icon {
+  font-size: clamp(20px, 3.5vw, 36px);
+  opacity: .85;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.event-trap {
+  animation: pulse-trap 1.8s infinite;
+}
+
+@keyframes pulse-trap {
+  0%, 100% { opacity: .65; }
+  50% { opacity: 1; }
+}
+
+/* =========================================
+   LEGENDA DO MODO ESPECIAL
+========================================= */
+
+.legend {
+  background: #10161e;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #c3ccd6;
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+
+.legend strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #ffd447;
+}
+
+.legend p {
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.legend.hidden {
+  display: none;
+}
+
+/* =========================================
+   REI EM XEQUE
+========================================= */
+
+.square.in-check {
+  box-shadow: inset 0 0 0 6px #e53935, inset 0 0 25px rgba(229, 57, 53, .7);
+}
+
+/* =========================================
+   PAINEL
+========================================= */
+
+.panel {
+  width: 310px;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(18, 25, 34, .96);
+  border: 1px solid rgba(255, 255, 255, .06);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
+}
+
+/* =========================================
+   STATUS
+========================================= */
+
+.status {
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  background: #18222d;
+  text-align: center;
+}
+
+.status strong {
+  display: block;
+  font-size: 19px;
+  margin-bottom: 5px;
+}
+
+.status span {
+  color: #aeb8c4;
+}
+
+/* =========================================
+   CONFIGURAÇÃO
+========================================= */
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #aeb9c7;
+}
+
+.setting-row select {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: #10161e;
+  color: white;
+  font-size: 14px;
+}
+
+/* =========================================
+   CRONÔMETRO
+========================================= */
+
+.timer-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.timer {
+  background: #10161e;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: border-color .2s, background .2s;
+}
+
+.timer.active {
+  border-color: #3478f6;
+  background: #131c28;
+}
+
+.timer span {
+  display: block;
+  font-family: monospace;
+  font-size: 27px;
+  font-weight: bold;
+}
+
+.timer small {
+  color: #929eac;
+}
+
+/* =========================================
+   PEÇAS CAPTURADAS
+========================================= */
+
+.captured-container {
+  margin-bottom: 15px;
+}
+
+.captured-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 26px;
+  padding: 4px 2px;
+  font-size: 20px;
+  color: #d9e0e8;
+}
+
+.captured-row .material {
+  font-family: monospace;
+  font-size: 14px;
+  color: #6fcf97;
+  font-weight: bold;
+}
+
+/* =========================================
+   MOVIMENTOS
+========================================= */
+
+.moves {
+  height: 220px;
+  overflow-y: auto;
+  background: #10161e;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.moves h3 {
+  margin-top: 0;
+  font-size: 17px;
+}
+
+.move {
+  display: grid;
+  grid-template-columns: 35px 1fr 1fr;
+  padding: 7px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+  color: #d9e0e8;
+  font-family: monospace;
+}
+
+/* =========================================
+   BOTÕES
+========================================= */
+
+button {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+  color: white;
+  background: #3478f6;
+  transition: .2s;
+}
+
+button:hover {
+  background: #2465da;
+  transform: translateY(-1px);
+}
+
+button:focus-visible {
+  outline: 3px solid #ffd447;
+  outline-offset: 2px;
+}
+
+button.secondary {
+  background: #303b49;
+}
+
+button.secondary:hover {
+  background: #3d4b5d;
+}
+
+button.danger {
+  background: #7a2f2f;
+}
+
+button.danger:hover {
+  background: #93393a;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.button-row button {
+  margin-top: 0;
+}
+
+/* =========================================
+   MODAL DE PROMOÇÃO
+========================================= */
+
+.promotion-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 12, .78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.promotion-overlay.hidden {
+  display: none;
+}
+
+.promotion-box {
+  background: #141c26;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.promotion-box p {
+  margin: 0 0 16px;
+  color: #d9e0e8;
+}
+
+.promotion-options {
+  display: flex;
+  gap: 12px;
+}
+
+.promotion-btn {
+  width: 68px;
+  height: 68px;
+  font-size: 40px;
+  border-radius: 12px;
+  background: #1e2833;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.promotion-btn:hover {
+  background: #2a3948;
+  transform: translateY(-2px);
+}
+
+/* =========================================
+   RESPONSIVO
+========================================= */
+
+@media (max-width: 900px) {
+  .game-area {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .panel {
+    width: min(680px, 100%);
+  }
+
+  #board {
+    width: 90vw;
+    height: 90vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="game">
+
+  <header>
+    <h1>♛ Xadrez 2</h1>
+    <p>Xadrez clássico com regras completas — roque, en passant e promoção</p>
+  </header>
+
+  <div class="game-area">
+
+    <!-- TABULEIRO -->
+    <div class="board-container">
+      <div id="board" role="grid" aria-label="Tabuleiro de xadrez"></div>
+    </div>
+
+    <!-- PAINEL -->
+    <aside class="panel">
+
+      <div class="status">
+        <strong id="status">Vez das Brancas</strong>
+        <span id="message">Escolha uma peça.</span>
+      </div>
+
+      <div class="setting-row">
+        <label for="gameMode">Modo de jogo</label>
+        <select id="gameMode">
+          <option value="classic" selected>Clássico</option>
+          <option value="special">Especial ✨</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <label for="timeControl">Tempo por jogador</label>
+        <select id="timeControl">
+          <option value="180">3 minutos</option>
+          <option value="300">5 minutos</option>
+          <option value="600" selected>10 minutos</option>
+          <option value="900">15 minutos</option>
+          <option value="1800">30 minutos</option>
+          <option value="0">Sem cronômetro</option>
+        </select>
+      </div>
+
+      <div class="legend hidden" id="specialLegend">
+        <strong>Modo Especial:</strong>
+        <p>🧙 <b>Mago</b> — anda na diagonal (qualquer distância) ou 1 casa na ortogonal.</p>
+        <p>🏹 <b>Arqueiro</b> — anda 1 casa (sem capturar) e atira até 2 casas em linha reta.</p>
+        <p>🌀 Portal teleporta · 💎 Poço promove um peão · 🔥 Armadilha destrói quem pisar.</p>
+      </div>
+
+      <div class="timer-container">
+        <div class="timer" id="whiteTimerBox">
+          <span id="whiteTime">10:00</span>
+          <small>Brancas</small>
+        </div>
+        <div class="timer" id="blackTimerBox">
+          <span id="blackTime">10:00</span>
+          <small>Pretas</small>
+        </div>
+      </div>
+
+      <div class="captured-container">
+        <div class="captured-row">
+          <span id="capturedByWhite"></span>
+          <span class="material" id="materialWhite"></span>
+        </div>
+        <div class="captured-row">
+          <span id="capturedByBlack"></span>
+          <span class="material" id="materialBlack"></span>
+        </div>
+      </div>
+
+      <div class="moves">
+        <h3>Movimentos</h3>
+        <div id="moveList"></div>
+      </div>
+
+      <button id="restartBtn">🔄 Nova partida</button>
+      <button class="secondary" id="undoBtn">↩️ Desfazer movimento</button>
+
+      <div class="button-row">
+        <button class="danger" id="resignBtn">🏳️ Desistir</button>
+        <button class="secondary" id="drawBtn">🤝 Empate</button>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>
+
+<!-- MODAL DE PROMOÇÃO -->
+<div id="promotionOverlay" class="promotion-overlay hidden">
+  <div class="promotion-box">
+    <p>Escolha a peça de promoção:</p>
+    <div class="promotion-options" id="promotionOptions"></div>
+  </div>
+</div>
+
+<script>
 "use strict";
 
 /* =====================================================
@@ -1232,3 +1868,7 @@ gameModeSelect.addEventListener("change", restartGame);
 
 restartGame();
 setInterval(updateTimers, 1000);
+
+</script>
+</body>
+</html>

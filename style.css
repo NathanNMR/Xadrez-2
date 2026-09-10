@@ -161,6 +161,81 @@ header p {
 }
 
 /* =========================================
+   PEÇAS DO MODO ESPECIAL
+========================================= */
+
+.piece.special-piece {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.85em;
+  height: 0.85em;
+  font-size: 0.62em;
+  border-radius: 50%;
+  filter: none;
+  text-shadow: none;
+}
+
+.piece.special-piece.white {
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #1e2833, 0 4px 6px rgba(0, 0, 0, .4);
+}
+
+.piece.special-piece.black {
+  background: #1a2027;
+  box-shadow: 0 0 0 2px #e6ebef, 0 4px 6px rgba(0, 0, 0, .4);
+}
+
+/* =========================================
+   CASAS DE EVENTO
+========================================= */
+
+.event-icon {
+  font-size: clamp(20px, 3.5vw, 36px);
+  opacity: .85;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.event-trap {
+  animation: pulse-trap 1.8s infinite;
+}
+
+@keyframes pulse-trap {
+  0%, 100% { opacity: .65; }
+  50% { opacity: 1; }
+}
+
+/* =========================================
+   LEGENDA DO MODO ESPECIAL
+========================================= */
+
+.legend {
+  background: #10161e;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #c3ccd6;
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+
+.legend strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #ffd447;
+}
+
+.legend p {
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.legend.hidden {
+  display: none;
+}
+
+/* =========================================
    REI EM XEQUE
 ========================================= */
 
