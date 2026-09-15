@@ -1,113 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xadrez 2</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Xadrez 2 — Definitive Edition</title><link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="game">
-
-  <header>
-    <h1>♛ Xadrez 2</h1>
-    <p>Xadrez clássico com regras completas — roque, en passant e promoção</p>
-  </header>
-
-  <div class="game-area">
-
-    <!-- TABULEIRO -->
-    <div class="board-container">
-      <div id="board" role="grid" aria-label="Tabuleiro de xadrez"></div>
-    </div>
-
-    <!-- PAINEL -->
-    <aside class="panel">
-
-      <div class="status">
-        <strong id="status">Vez das Brancas</strong>
-        <span id="message">Escolha uma peça.</span>
-      </div>
-
-      <div class="setting-row">
-        <label for="gameMode">Modo de jogo</label>
-        <select id="gameMode">
-          <option value="classic" selected>Clássico</option>
-          <option value="special">Especial ✨</option>
-        </select>
-      </div>
-
-      <div class="setting-row">
-        <label for="timeControl">Tempo por jogador</label>
-        <select id="timeControl">
-          <option value="180">3 minutos</option>
-          <option value="300">5 minutos</option>
-          <option value="600" selected>10 minutos</option>
-          <option value="900">15 minutos</option>
-          <option value="1800">30 minutos</option>
-          <option value="0">Sem cronômetro</option>
-        </select>
-      </div>
-
-      <div class="legend hidden" id="specialLegend">
-        <strong>Modo Especial — tabuleiro 14×8</strong>
-        <p>Nenhuma peça clássica é substituída — o tabuleiro fica mais largo para acomodar as novas peças nas pontas, fora das torres.</p>
-        <p>🧙 <b>Mago</b> — anda na diagonal (qualquer distância) ou 1 casa na ortogonal.</p>
-        <p>🏹 <b>Arqueiro</b> — anda 1 casa (sem capturar) e atira até 2 casas em linha reta.</p>
-        <p>🐉 <b>Dragão</b> — combina os movimentos do Cavalo e do Bispo.</p>
-        <p>🌀 Portal teleporta · 💎 Poço promove um peão · 🔥 Armadilha destrói quem pisar.</p>
-      </div>
-
-      <div class="timer-container">
-        <div class="timer" id="whiteTimerBox">
-          <span id="whiteTime">10:00</span>
-          <small>Brancas</small>
-        </div>
-        <div class="timer" id="blackTimerBox">
-          <span id="blackTime">10:00</span>
-          <small>Pretas</small>
-        </div>
-      </div>
-
-      <div class="captured-container">
-        <div class="captured-row">
-          <span id="capturedByWhite"></span>
-          <span class="material" id="materialWhite"></span>
-        </div>
-        <div class="captured-row">
-          <span id="capturedByBlack"></span>
-          <span class="material" id="materialBlack"></span>
-        </div>
-      </div>
-
-      <div class="moves">
-        <h3>Movimentos</h3>
-        <div id="moveList"></div>
-      </div>
-
-      <button id="restartBtn">🔄 Nova partida</button>
-      <button class="secondary" id="undoBtn">↩️ Desfazer movimento</button>
-
-      <div class="button-row">
-        <button class="danger" id="resignBtn">🏳️ Desistir</button>
-        <button class="secondary" id="drawBtn">🤝 Empate</button>
-      </div>
-
-    </aside>
-
-  </div>
-
+<div class="app">
+<header class="topbar"><div><h1>♛ Xadrez 2</h1><p>Definitive Edition · Clássico + Especial</p></div><div class="top-actions"><button id="flipBtn" title="Virar tabuleiro">↻ Virar</button><button id="saveBtn">💾 Salvar</button><button id="loadBtn">📂 Continuar</button></div></header>
+<section class="setup" id="setup"><div class="setup-card"><h2>Nova partida</h2><div class="setup-grid"><label>Modo<select id="mode"><option value="classic">Clássico 8×8</option><option value="special">Especial 14×8</option></select></label><label>Tempo<select id="time"><option value="0">Sem cronômetro</option><option value="180">3 min</option><option value="300">5 min</option><option value="600" selected>10 min</option><option value="900">15 min</option></select></label><label>Tema<select id="theme"><option value="wood">Madeira</option><option value="midnight">Meia-noite</option><option value="marble">Mármore</option></select></label><label>Eventos<select id="events"><option value="on">Ligados</option><option value="off">Desligados</option></select></label></div><button class="primary" id="startBtn">▶ Iniciar partida</button></div></section>
+<main class="layout hidden" id="gameView"><section class="board-shell"><div class="player-bar"><div id="blackName">⚫ Pretas</div><div id="blackClock">10:00</div></div><div class="board-wrap"><div id="filesTop" class="files"></div><div id="ranksLeft" class="ranks"></div><div id="board" role="grid" aria-label="Tabuleiro"></div><div id="ranksRight" class="ranks right"></div><div id="filesBottom" class="files bottom"></div></div><div class="player-bar bottom"><div id="whiteName">⚪ Brancas</div><div id="whiteClock">10:00</div></div></section>
+<aside class="panel"><div class="status-card"><strong id="status">Vez das Brancas</strong><span id="message">Escolha uma peça para jogar.</span></div><div class="event-card" id="eventCard"><strong>🌦 Evento climático</strong><span id="climate">Nenhum evento ativo</span></div><div class="mini-grid"><div><small>Modo</small><b id="modeLabel">Clássico</b></div><div><small>Lance</small><b id="turnLabel">1</b></div></div><div class="captured"><h3>Capturadas</h3><div><span>Brancas:</span><span id="capWhite"></span></div><div><span>Pretas:</span><span id="capBlack"></span></div></div><div class="history"><div class="history-head"><h3>Movimentos</h3><button id="exportBtn">PGN</button></div><div id="moves"></div></div><div class="controls"><button class="primary" id="newBtn">🔄 Nova</button><button id="undoBtn">↩ Desfazer</button><button id="drawBtn">🤝 Empate</button><button class="danger" id="resignBtn">🏳 Desistir</button></div></aside></main>
 </div>
-
-<!-- MODAL DE PROMOÇÃO -->
-<div id="promotionOverlay" class="promotion-overlay hidden">
-  <div class="promotion-box">
-    <p>Escolha a peça de promoção:</p>
-    <div class="promotion-options" id="promotionOptions"></div>
-  </div>
-</div>
-
+<div id="promotion" class="modal hidden"><div class="modal-box"><h3>Promover peão</h3><div id="promotionChoices" class="choices"></div></div></div>
+<div id="dialog" class="modal hidden"><div class="modal-box"><h3 id="dialogTitle"></h3><p id="dialogText"></p><div class="dialog-actions"><button id="dialogCancel">Cancelar</button><button class="primary" id="dialogOk">Confirmar</button></div></div></div>
 <script src="script.js"></script>
-</body>
-</html>
+</body></html>
