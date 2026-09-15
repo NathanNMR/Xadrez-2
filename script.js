@@ -21,7 +21,7 @@ else if(p.type==="king"||p.type==="archer"||p.type==="guardian"){for(let dR=-1;d
 if(p.type==="archer"&&!attack){for(const[dR,dC]of [[2,0],[-2,0],[0,2],[0,-2]]){let nr=r+dR,nc=c+dC,mr=r+dR/2,mc=c+dC/2;if(inB(nr,nc)&&S.board[nr][nc]&&enemy(p,S.board[nr][nc])&&!S.board[mr][mc])m.push({r:nr,c:nc,shot:true,capture:true})}}
 if(p.type==="guardian"&&!attack){for(const[dR,dC]of [[2,0],[-2,0],[0,2],[0,-2]]){let nr=r+dR,nc=c+dC;if(inB(nr,nc)&&!S.board[nr][nc])m.push({r:nr,c:nc})}}
 if(p.type==="king"&&!attack&&!p.hasMoved){let home=p.color==="white"?7:0;for(const side of [-1,1]){let rookCol=side===-1?findRook(home,-1):findRook(home,1);if(rookCol!==null){let clear=true;for(let cc=Math.min(c,rookCol)+1;cc<Math.max(c,rookCol);cc++)if(S.board[home][cc])clear=false;if(clear&&!isCheck(p.color)&&!attacked(home,c+side,p.color)&&!attacked(home,c+2*side,p.color))m.push({r:home,c:c+2*side,castle:true,rookCol})}}}
-return m;}
+}return m;}
 function findRook(r,side){let king=S.board[r].findIndex(x=>x&&x.type==="king"&&x.color===S.board[r][S.board[r].findIndex(y=>y&&y.type==="king")].color);let p=S.board[r][king];for(let c=king+side;c>=0&&c<S.cols;c+=side){let q=S.board[r][c];if(q){if(q.type==="rook"&&q.color===p.color&&!q.hasMoved)return c;return null}}return null}
 function attacked(r,c,byColor){for(let rr=0;rr<8;rr++)for(let cc=0;cc<S.cols;cc++){let p=S.board[rr][cc];if(p&&p.color===byColor){let a=pseudo(rr,cc,true);if(a.some(x=>x.r===r&&x.c===c))return true}}return false}
 function kingPos(color){for(let r=0;r<8;r++)for(let c=0;c<S.cols;c++){let p=S.board[r][c];if(p&&p.type==="king"&&p.color===color)return {r,c}}return null}
